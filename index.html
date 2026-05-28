@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lili ♥</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Dancing+Script:wght@400;600;700&family=Cinzel:wght@300;400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --crimson:      #c41e3a;
+      --deep-red:     #8b0000;
+      --rose:         #e8486a;
+      --purple:       #7b2d8b;
+      --deep-purple:  #4a0e5c;
+      --lavender:     #c49dfa;
+      --light-purple: #e0c8ff;
+      --bg:           #080112;
+      --card-bg:      rgba(14, 4, 28, 0.88);
+      --text:         #f0e6ff;
+      --text-dim:     #c4a8e0;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(ellipse at 15% 40%, rgba(74, 14, 92, 0.4) 0%, transparent 55%),
+        radial-gradient(ellipse at 85% 60%, rgba(139, 0, 0, 0.3) 0%, transparent 55%),
+        radial-gradient(ellipse at 50% 10%, rgba(123, 45, 139, 0.2) 0%, transparent 50%),
+        #080112;
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      color: var(--text);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Stars canvas ── */
+    #starCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Petals ── */
+    #petals {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    .petal {
+      position: absolute;
+      top: -40px;
+      border-radius: 62% 38% 70% 30% / 45% 55% 45% 55%;
+      animation: petalFall linear infinite;
+      will-change: transform, opacity;
+    }
+
+    @keyframes petalFall {
+      0%   { transform: translateY(-40px)  rotate(0deg)   translateX(0px);   opacity: 0; }
+      8%   { opacity: 0.7; }
+      50%  { transform: translateY(52vh)   rotate(380deg) translateX(50px);  opacity: 0.6; }
+      92%  { opacity: 0.45; }
+      100% { transform: translateY(108vh)  rotate(740deg) translateX(-25px); opacity: 0; }
+    }
+
+    /* ── Admin bar ── */
+    #adminBar {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      background: rgba(74, 14, 92, 0.2);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(196, 157, 250, 0.2);
+      padding: 10px 20px;
+      z-index: 80;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    #adminBar.active { display: flex; }
+
+    #adminBar .admin-label {
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      letter-spacing: 3px;
+      color: var(--lavender);
+      opacity: 0.85;
+    }
+
+    .admin-bar-right { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 18px;
+      border: none;
+      border-radius: 2px;
+      cursor: pointer;
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      letter-spacing: 2px;
+      transition: all 0.3s ease;
+      white-space: nowrap;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--deep-red), var(--deep-purple));
+      color: var(--light-purple);
+    }
+    .btn-primary:hover, .btn-primary:active {
+      background: linear-gradient(135deg, var(--crimson), var(--purple));
+      color: #fff;
+    }
+    .btn-secondary {
+      background: transparent;
+      color: var(--text-dim);
+      border: 1px solid rgba(196, 157, 250, 0.25);
+    }
+    .btn-secondary:hover, .btn-secondary:active {
+      border-color: var(--lavender);
+      color: var(--light-purple);
+    }
+    .btn-saved {
+      background: linear-gradient(135deg, #0d5c2a, #184d1c) !important;
+      color: #a0ffb0 !important;
+    }
+
+    /* ── Admin lock trigger ── */
+    #adminTrigger {
+      position: fixed;
+      bottom: 16px;
+      right: 20px;
+      font-size: 1rem;
+      opacity: 0.04;
+      cursor: pointer;
+      z-index: 10;
+      padding: 10px;
+      line-height: 1;
+      color: var(--lavender);
+      transition: opacity 0.4s;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    #adminTrigger:hover { opacity: 0.28; }
+
+    /* ── Main layout ── */
+    main {
+      position: relative;
+      z-index: 2;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 56px 16px 60px;
+    }
+
+    /* ── Top ornament ── */
+    .top-ornament {
+      text-align: center;
+      margin-bottom: 26px;
+    }
+
+    .top-label {
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      letter-spacing: 5px;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      opacity: 0.65;
+      margin-bottom: 12px;
+    }
+
+    .ornament-line {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+    }
+
+    .ornament-line::before,
+    .ornament-line::after {
+      content: '';
+      display: block;
+      height: 1px;
+      background: linear-gradient(to right, transparent, rgba(196, 30, 58, 0.55));
+    }
+    .ornament-line::before { width: 70px; }
+    .ornament-line::after  {
+      width: 70px;
+      background: linear-gradient(to left, transparent, rgba(196, 30, 58, 0.55));
+    }
+
+    .ornament-flowers {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .ornament-flowers .f1 { color: var(--crimson);  font-size: 1.1rem; animation: floatSymbol 5s ease-in-out infinite; }
+    .ornament-flowers .f2 { color: var(--lavender); font-size: 0.8rem; animation: floatSymbol 5s ease-in-out infinite 0.6s; }
+    .ornament-flowers .f3 { color: var(--crimson);  font-size: 1.1rem; animation: floatSymbol 5s ease-in-out infinite 1.2s; }
+
+    @keyframes floatSymbol {
+      0%, 100% { transform: translateY(0); }
+      50%       { transform: translateY(-4px); }
+    }
+
+    /* ── Card ── */
+    .card {
+      max-width: 700px;
+      width: 100%;
+      background: var(--card-bg);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(196, 157, 250, 0.12);
+      border-radius: 3px;
+      padding: 56px 64px 50px;
+      position: relative;
+      box-shadow:
+        0 0 0 1px rgba(196, 30, 58, 0.05),
+        0 6px 40px rgba(0, 0, 0, 0.55),
+        0 0 80px rgba(123, 45, 139, 0.1),
+        0 0 160px rgba(139, 0, 0, 0.06),
+        inset 0 0 80px rgba(0, 0, 0, 0.2);
+      animation: cardFloat 14s ease-in-out infinite;
+    }
+
+    @keyframes cardFloat {
+      0%, 100% { transform: translateY(0px); }
+      50%       { transform: translateY(-3px); }
+    }
+
+    .card-border-top,
+    .card-border-bottom {
+      position: absolute;
+      left: 8%;
+      width: 84%;
+      height: 1px;
+    }
+    .card-border-top {
+      top: 0;
+      background: linear-gradient(to right, transparent, var(--crimson), var(--lavender), var(--crimson), transparent);
+    }
+    .card-border-bottom {
+      bottom: 0;
+      background: linear-gradient(to right, transparent, var(--crimson), var(--lavender), var(--crimson), transparent);
+    }
+
+    /* Corner sparkles */
+    .corner { position: absolute; font-size: 0.85rem; }
+    .corner-tl { top: 14px;  left: 18px;  color: var(--crimson);  opacity: 0.45; animation: sparkle 3.5s ease-in-out infinite; }
+    .corner-tr { top: 14px;  right: 18px; color: var(--lavender); opacity: 0.45; animation: sparkle 3.5s ease-in-out infinite 0.9s; }
+    .corner-bl { bottom: 14px; left: 18px;  color: var(--lavender); opacity: 0.45; animation: sparkle 3.5s ease-in-out infinite 1.8s; }
+    .corner-br { bottom: 14px; right: 18px; color: var(--crimson);  opacity: 0.45; animation: sparkle 3.5s ease-in-out infinite 2.7s; }
+
+    @keyframes sparkle {
+      0%, 100% { opacity: 0.25; transform: scale(1); }
+      50%       { opacity: 0.65; transform: scale(1.15); }
+    }
+
+    .card::after {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: 3px;
+      pointer-events: none;
+      z-index: -1;
+      animation: glowPulse 5s ease-in-out infinite;
+    }
+    @keyframes glowPulse {
+      0%, 100% { box-shadow: 0 0 30px rgba(196, 30, 58, 0.05), 0 0 60px rgba(123, 45, 139, 0.03); }
+      50%       { box-shadow: 0 0 50px rgba(196, 30, 58, 0.12), 0 0 90px rgba(123, 45, 139, 0.08); }
+    }
+
+    /* ── Letter header ── */
+    .letter-header { text-align: center; margin-bottom: 28px; }
+
+    #letterDate {
+      font-family: 'Cinzel', serif;
+      font-size: 0.62rem;
+      letter-spacing: 3.5px;
+      color: var(--text-dim);
+      opacity: 0.6;
+      margin-bottom: 10px;
+      outline: none;
+    }
+
+    #letterDate[contenteditable="true"] {
+      border-bottom: 1px dashed rgba(196, 157, 250, 0.35);
+      padding-bottom: 2px;
+      cursor: text;
+      display: inline-block;
+    }
+
+    .letter-to-line {
+      font-family: 'Dancing Script', cursive;
+      font-size: clamp(2rem, 6vw, 3rem);
+      line-height: 1.2;
+      color: var(--lavender);
+    }
+
+    .letter-to-line .name-highlight {
+      color: var(--rose);
+      font-size: clamp(2.2rem, 7vw, 3.4rem);
+    }
+
+    /* ── Divider ── */
+    .section-divider {
+      text-align: center;
+      margin: 20px 0 26px;
+      color: var(--crimson);
+      letter-spacing: 10px;
+      font-size: 0.82rem;
+      opacity: 0.4;
+    }
+
+    /* ── Letter body ── */
+    #letterText {
+      font-size: clamp(1rem, 3.2vw, 1.16rem);
+      line-height: 1.95;
+      color: var(--text);
+      font-style: italic;
+      font-weight: 300;
+      white-space: pre-wrap;
+      word-break: break-word;
+      outline: none;
+      min-height: 80px;
+    }
+
+    #letterText[contenteditable="true"] {
+      border: 1px dashed rgba(196, 157, 250, 0.32);
+      border-radius: 3px;
+      padding: 14px 18px;
+      background: rgba(255, 255, 255, 0.02);
+      cursor: text;
+    }
+
+    /* ── Signature ── */
+    .letter-signature-wrap {
+      text-align: right;
+      margin-top: 38px;
+    }
+
+    #letterSignature {
+      font-family: 'Dancing Script', cursive;
+      font-size: clamp(1.5rem, 5vw, 2rem);
+      color: var(--lavender);
+      display: inline-block;
+      outline: none;
+    }
+
+    #letterSignature[contenteditable="true"] {
+      border-bottom: 1px dashed rgba(196, 157, 250, 0.38);
+      padding-bottom: 2px;
+      cursor: text;
+    }
+
+    .name-highlight[contenteditable="true"] {
+      border-bottom: 1px dashed rgba(232, 72, 106, 0.5);
+      padding-bottom: 2px;
+      cursor: text;
+      outline: none;
+    }
+
+    /* ── Card footer ornament ── */
+    .card-footer-ornament {
+      text-align: center;
+      margin-top: 32px;
+      font-size: 1.5rem;
+      letter-spacing: 8px;
+      opacity: 0.38;
+    }
+    .card-footer-ornament .h1 { color: var(--crimson); }
+    .card-footer-ornament .h2 { color: var(--lavender); }
+
+    /* ── Modal ── */
+    #modalOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.84);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      padding: 20px;
+    }
+    #modalOverlay.active { display: flex; }
+
+    .modal {
+      background: #100420;
+      border: 1px solid rgba(196, 157, 250, 0.2);
+      border-radius: 4px;
+      padding: 40px 36px 32px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 0 60px rgba(123, 45, 139, 0.25), 0 20px 60px rgba(0,0,0,0.6);
+      animation: modalIn 0.28s ease;
+    }
+
+    @keyframes modalIn {
+      from { transform: translateY(14px) scale(0.97); opacity: 0; }
+      to   { transform: translateY(0)    scale(1);    opacity: 1; }
+    }
+
+    .modal-icon {
+      text-align: center;
+      font-size: 1.8rem;
+      margin-bottom: 14px;
+      opacity: 0.55;
+    }
+
+    .modal h2 {
+      font-family: 'Cinzel', serif;
+      font-size: 0.7rem;
+      letter-spacing: 3px;
+      color: var(--text-dim);
+      text-align: center;
+      margin-bottom: 22px;
+    }
+
+    .modal input[type="password"] {
+      width: 100%;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(196, 157, 250, 0.2);
+      border-radius: 2px;
+      padding: 13px 16px;
+      color: var(--text);
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.1rem;
+      outline: none;
+      transition: border-color 0.3s;
+      letter-spacing: 2px;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    .modal input[type="password"]:focus {
+      border-color: rgba(123, 45, 139, 0.65);
+      box-shadow: 0 0 0 3px rgba(123, 45, 139, 0.12);
+    }
+
+    #errorMsg {
+      color: var(--crimson);
+      font-size: 0.75rem;
+      text-align: center;
+      min-height: 20px;
+      margin: 10px 0 0;
+      font-family: 'Cinzel', serif;
+      letter-spacing: 1px;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 18px;
+    }
+    .modal-buttons .btn { flex: 1; padding: 12px; font-size: 0.62rem; }
+
+    /* ── Responsive — mobile ── */
+    @media (max-width: 600px) {
+      main { padding: 48px 12px 56px; }
+
+      .card {
+        padding: 40px 24px 36px;
+        border-radius: 4px;
+      }
+
+      .card-border-top,
+      .card-border-bottom { left: 5%; width: 90%; }
+
+      .ornament-line::before,
+      .ornament-line::after { width: 44px; }
+
+      .section-divider { letter-spacing: 6px; margin: 16px 0 22px; }
+
+      #letterText { line-height: 1.85; }
+
+      .letter-signature-wrap { margin-top: 28px; }
+
+      .card-footer-ornament { margin-top: 24px; font-size: 1.2rem; letter-spacing: 6px; }
+
+      .top-ornament { margin-bottom: 20px; }
+    }
+
+    @media (max-width: 380px) {
+      .card { padding: 32px 18px 28px; }
+      #adminBar { padding: 8px 12px; }
+      #adminBar .admin-label { display: none; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .card           { animation: none; }
+      .petal          { animation-duration: 20s; }
+      .ornament-flowers .f1,
+      .ornament-flowers .f2,
+      .ornament-flowers .f3 { animation: none; }
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="starCanvas"></canvas>
+<div id="petals"></div>
+
+<!-- Admin bar -->
+<div id="adminBar">
+  <span class="admin-label">✦ &nbsp;MODO ADMINISTRACIÓN&nbsp; ✦</span>
+  <div class="admin-bar-right">
+    <button class="btn btn-primary" id="saveBtn" onclick="saveContent()">Guardar cambios</button>
+    <button class="btn btn-secondary" onclick="exitAdmin()">Salir</button>
+  </div>
+</div>
+
+<!-- Admin trigger -->
+<span id="adminTrigger" title="">🔒</span>
+
+<!-- Main -->
+<main>
+  <div class="top-ornament">
+    <p class="top-label">Te amo</p>
+    <div class="ornament-line">
+      <div class="ornament-flowers">
+        <span class="f1">✿</span>
+        <span class="f2">✦</span>
+        <span class="f3">✿</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="mainCard">
+    <div class="card-border-top"></div>
+    <div class="card-border-bottom"></div>
+    <span class="corner corner-tl">✦</span>
+    <span class="corner corner-tr">✦</span>
+    <span class="corner corner-bl">✦</span>
+    <span class="corner corner-br">✦</span>
+
+    <div class="letter-header">
+      <p id="letterDate">2 de junio de 2026</p>
+      <p class="letter-to-line">Para <span class="name-highlight" id="recipientName">Lili</span>,</p>
+    </div>
+
+    <div class="section-divider">· · ✦ · ·</div>
+
+    <div
+      id="letterText"
+      contenteditable="false"
+      spellcheck="false"
+    >Realmente, mi pensamiento más recurrente es que no puedo esperar a ver nuestro futuro juntas: con nuestra casita en medio de una montaña, nuestros perritos y gatitos e incluso, cuando llegue el momento, tener hijitos parecidos a nosotras (sí, Matthew está incluido en el plan).
+
+Y eso es muy loco, porque yo jamás vi un futuro con nadie, pero con vos lo vi desde el primer día. Por eso confío en que esto jamás se va a terminar y que ese futuro se va a hacer realidad.
+
+Te amo tanto que no me alcanzan las palabras en esta carta para decírtelo, y creo que jamás me van a alcanzar, pero haré todo lo posible para demostrarte, cada día que pasemos juntas, este amor tan grande que siento por vos.
+
+Aunque asusta un poco amar TANTO a alguien, sé que valés absolutamente la pena: con tus autistadas, tus caídas a los pozos de repo, tu bullying a los nenes, la forma en la que me mirás desde esa llamada en Omegle y cómo me entendés con solo mirarme. Me encanta tu sonrisa tan hermosa, tus anécdotas de la vida (que las escucharía durante horas y horas sin aburrirme), cómo nos cagamos de risa juntas absolutamente todos los días y cómo nos molestamos mutuamente. En fin, jamás cambiaría nadota de todo esto, porque cada detalle de vos me fascina.
+
+De lo único que estoy completamente segura es de que cada día me convenzo más de que sos el amor de mi vida y de que quiero pasar el resto de mis días con vos a mi lado. 
+
+Por ultimo y para no hacer tan larga esta carta (perdon de antemano por tanta intensidad), quiero que sepas que jamás te voy a abandonar.
+
+Y hablando de abandonar... te tenemos una pregunta 😋</div>
+
+    <div class="letter-signature-wrap">
+      <span id="letterSignature" contenteditable="false" spellcheck="false">Con todo mi corazón, Agus ♥</span>
+    </div>
+
+    <div class="card-footer-ornament">
+      <span class="h1">✿</span>
+      <span class="h2"> ♥ </span>
+      <span class="h1">✿</span>
+    </div>
+  </div>
+</main>
+
+<!-- Password modal -->
+<div id="modalOverlay">
+  <div class="modal">
+    <div class="modal-icon">🔒</div>
+    <h2>Acceso Administrador</h2>
+    <input
+      type="password"
+      id="passwordInput"
+      placeholder="Contraseña"
+      autocomplete="current-password"
+      onkeydown="if(event.key==='Enter') checkPassword()"
+    />
+    <div id="errorMsg"></div>
+    <div class="modal-buttons">
+      <button class="btn btn-primary" onclick="checkPassword()">Entrar</button>
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CONFIGURACIÓN
+// ============================================================
+const ADMIN_PASSWORD = 'gengar';
+// ============================================================
+
+// ── Stars ───────────────────────────────────────────────────
+const canvas = document.getElementById('starCanvas');
+const ctx    = canvas.getContext('2d');
+let stars    = [];
+
+function resizeCanvas() {
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+
+function initStars() {
+  stars = [];
+  const n = Math.min(Math.floor((canvas.width * canvas.height) / 6000), 220);
+  for (let i = 0; i < n; i++) {
+    stars.push({
+      x:      Math.random() * canvas.width,
+      y:      Math.random() * canvas.height,
+      r:      Math.random() * 1.2 + 0.2,
+      offset: Math.random() * Math.PI * 2,
+      speed:  Math.random() * 0.005 + 0.001,
+      hue:    Math.floor(Math.random() * 3),
+    });
+  }
+}
+
+function drawStars(t) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  for (const s of stars) {
+    const a = 0.25 + 0.55 * Math.abs(Math.sin(t * s.speed + s.offset));
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    if      (s.hue === 1) ctx.fillStyle = `rgba(196,30,58,${(a*0.7).toFixed(2)})`;
+    else if (s.hue === 2) ctx.fillStyle = `rgba(196,157,250,${(a*0.8).toFixed(2)})`;
+    else                  ctx.fillStyle = `rgba(255,255,255,${a.toFixed(2)})`;
+    ctx.fill();
+  }
+}
+
+let t = 0;
+(function tick() { t += 0.016; drawStars(t); requestAnimationFrame(tick); })();
+
+resizeCanvas(); initStars();
+window.addEventListener('resize', () => { resizeCanvas(); initStars(); });
+
+// ── Petals ──────────────────────────────────────────────────
+const petalContainer = document.getElementById('petals');
+const petalPalette = [
+  ['#c41e3a','#8b0000'], ['#a01530','#6b000e'],
+  ['#7b2d8b','#4a0e5c'], ['#9b3dab','#6b1a7a'],
+  ['#c49dfa','#8b50cc'], ['#d4186c','#9b0040'],
+  ['#b03060','#800030'],
+];
+
+for (let i = 0; i < 28; i++) {
+  const el = document.createElement('div');
+  el.className = 'petal';
+  const [c1,c2] = petalPalette[Math.floor(Math.random() * petalPalette.length)];
+  const w = Math.random() * 11 + 6;
+  const h = w * (Math.random() * 0.7 + 1.1);
+  el.style.cssText = `
+    left:${(Math.random()*103-1.5).toFixed(1)}%;
+    width:${w.toFixed(1)}px;height:${h.toFixed(1)}px;
+    background:linear-gradient(135deg,${c1},${c2});
+    box-shadow:inset 0 0 3px rgba(255,255,255,0.1);
+    animation-duration:${(Math.random()*9+9).toFixed(2)}s;
+    animation-delay:${(Math.random()*15).toFixed(2)}s;
+    animation-name:petalFall;opacity:0;
+  `;
+  petalContainer.appendChild(el);
+}
+
+// ── Persist ─────────────────────────────────────────────────
+const STORAGE_KEY = 'cartaContent_v1';
+
+function loadContent() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const d = JSON.parse(raw);
+    if (d.text)      document.getElementById('letterText').textContent      = d.text;
+    if (d.signature) document.getElementById('letterSignature').textContent = d.signature;
+    if (d.recipient) document.getElementById('recipientName').textContent   = d.recipient;
+    if (d.date)      document.getElementById('letterDate').textContent      = d.date;
+  } catch (_) {}
+}
+loadContent();
+
+// ── Admin trigger (5 clicks) ────────────────────────────────
+let clickCount = 0, clickTimer = null;
+
+document.getElementById('adminTrigger').addEventListener('click', () => {
+  clickCount++;
+  clearTimeout(clickTimer);
+  clickTimer = setTimeout(() => { clickCount = 0; }, 2000);
+  if (clickCount >= 5) { clickCount = 0; openModal(); }
+});
+
+// ── Modal ───────────────────────────────────────────────────
+function openModal() {
+  document.getElementById('passwordInput').value   = '';
+  document.getElementById('errorMsg').textContent  = '';
+  document.getElementById('modalOverlay').classList.add('active');
+  setTimeout(() => document.getElementById('passwordInput').focus(), 100);
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('active');
+}
+
+function checkPassword() {
+  if (document.getElementById('passwordInput').value === ADMIN_PASSWORD) {
+    closeModal(); enterAdmin();
+  } else {
+    document.getElementById('errorMsg').textContent = 'Contraseña incorrecta.';
+    document.getElementById('passwordInput').value  = '';
+    document.getElementById('passwordInput').focus();
+  }
+}
+
+document.getElementById('modalOverlay').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) closeModal();
+});
+
+// ── Admin mode ──────────────────────────────────────────────
+let inAdmin = false;
+
+function enterAdmin() {
+  inAdmin = true;
+  document.getElementById('adminBar').classList.add('active');
+  ['letterText','letterSignature','letterDate','recipientName'].forEach(id => {
+    document.getElementById(id).contentEditable = 'true';
+  });
+  document.getElementById('mainCard').style.animation = 'none';
+  document.getElementById('letterText').focus();
+}
+
+function exitAdmin() {
+  inAdmin = false;
+  document.getElementById('adminBar').classList.remove('active');
+  ['letterText','letterSignature','letterDate','recipientName'].forEach(id => {
+    document.getElementById(id).contentEditable = 'false';
+  });
+  document.getElementById('mainCard').style.animation = '';
+}
+
+function saveContent() {
+  const data = {
+    text:      document.getElementById('letterText').innerText,
+    signature: document.getElementById('letterSignature').innerText,
+    recipient: document.getElementById('recipientName').innerText,
+    date:      document.getElementById('letterDate').innerText,
+  };
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (_) {}
+
+  const btn = document.getElementById('saveBtn');
+  btn.textContent = '✓ Guardado';
+  btn.classList.add('btn-saved');
+  setTimeout(() => { btn.textContent = 'Guardar cambios'; btn.classList.remove('btn-saved'); }, 2200);
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') { closeModal(); if (inAdmin) exitAdmin(); }
+});
+</script>
+</body>
+</html>
