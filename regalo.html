@@ -514,39 +514,43 @@ function buildSVGPath(cx, cy, scale, samples) {
 }
 
 function renderHeart() {
-  const vw       = window.innerWidth;
-  const isMobile = vw < 600;
-  const n        = SONGS.length;
+  const vw = window.innerWidth;
+  const n  = SONGS.length;
 
-  // Scale the heart to fit the viewport
-  const maxW  = Math.min(vw - 28, 580);
-  const scale = Math.floor(Math.min(maxW / 38, isMobile ? 9 : 14));
+  // Distribución por arco (math units, scale=1)
+  const { tValues, totalArc: totalArcU } = arcLengthParams(n);
 
-  // Chip size: bounded by available arc-length per song
-  const { tValues, totalArc } = arcLengthParams(n);
-  const arcPerSong = totalArc * scale / n;             // pixels between songs
-  const maxChipW   = Math.floor(arcPerSong * 0.92);    // leave a small gap
+  // Calculamos scale de forma que W = 32*scale + chipW + 12 quede dentro de la pantalla.
+  // chipW ≈ totalArcU * scale * chipK / n  (fracción del arco por canción)
+  // → W ≈ scale*(32 + totalArcU*chipK/n) + 12
+  // → scale_max = (safeW - 12) / (32 + totalArcU*chipK/n)
+  const chipK  = 0.82;
+  const safeW  = vw - 44;            // deja 22 px de margen a cada lado
+  const maxScaleRaw = (safeW - 12) / (32 + totalArcU * chipK / n);
+  const scale  = Math.max(5, Math.min(Math.floor(maxScaleRaw), 14));
 
-  let chipW = isMobile ? Math.max(88, scale * 10) : Math.min(148, scale * 11);
-  chipW = Math.min(chipW, maxChipW);
+  // Tamaño de chips: acotado por arco/canción
+  const arcPerSong = totalArcU * scale / n;
+  const chipByArc  = Math.floor(arcPerSong * chipK);
+  const chipW      = Math.max(68, chipByArc);
+  const chipH      = Math.max(36, Math.floor(chipW * 0.40));
+  const titleSz    = Math.max(10, Math.floor(chipW * 0.095));
+  const artistSz   = Math.max(8,  Math.floor(chipW * 0.075));
 
-  const chipH     = Math.min(isMobile ? 40 : 54, Math.floor(chipW * 0.38));
-  const titleSz   = Math.max(8, Math.floor(chipW * 0.092));
-  const artistSz  = Math.max(6, Math.floor(chipW * 0.072));
-
-  const padH = chipW * 0.52 + 4;
-  const padV = chipH * 0.65 + 4;
-  const W    = Math.ceil(32 * scale + padH * 2);
-  const H    = Math.ceil(29 * scale + padV * 2);
+  // Contenedor: padH = chipW/2 + margen → chips en los extremos nunca salen
+  const padH = Math.ceil(chipW / 2) + 8;
+  const padV = Math.ceil(chipH / 2) + 8;
+  const W    = 32 * scale + padH * 2;
+  const H    = 29 * scale + padV * 2;
   const cx   = W / 2;
-  const cy   = padV + 12 * scale;   // y_math top ≈ 12 → sits at padV from top
+  const cy   = padV + 12 * scale;
 
   const container = document.getElementById('heartContainer');
   container.style.width  = W + 'px';
   container.style.height = H + 'px';
   container.innerHTML    = '';
 
-  // SVG heart guide
+  // SVG de guía
   const svgNS = 'http://www.w3.org/2000/svg';
   const svg   = document.createElementNS(svgNS, 'svg');
   svg.setAttribute('width', W);
@@ -556,11 +560,11 @@ function renderHeart() {
   fillPath.setAttribute('d', buildSVGPath(cx, cy, scale, 300));
   fillPath.setAttribute('fill',         'rgba(196,30,58,0.04)');
   fillPath.setAttribute('stroke',       'rgba(196,30,58,0.16)');
-  fillPath.setAttribute('stroke-width', scale < 9 ? '1' : '1.5');
+  fillPath.setAttribute('stroke-width', scale < 8 ? '1' : '1.5');
   svg.appendChild(fillPath);
   container.appendChild(svg);
 
-  // Song chips — posicionadas por longitud de arco real
+  // Chips de canciones
   for (let i = 0; i < n; i++) {
     const { x: xM, y: yM } = heartMath(tValues[i]);
     const px   = cx + xM * scale - chipW / 2;
