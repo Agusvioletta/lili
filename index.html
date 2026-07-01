@@ -140,6 +140,26 @@
       color: #a0ffb0 !important;
     }
 
+    /* ── Nav link to regalo ── */
+    .nav-regalo {
+      margin-top: 38px;
+      text-align: center;
+      position: relative;
+      z-index: 2;
+    }
+    .nav-regalo a {
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      letter-spacing: 3px;
+      color: var(--text-dim);
+      opacity: 0.4;
+      text-decoration: none;
+      transition: opacity 0.35s, color 0.35s;
+      padding: 6px 0;
+      display: inline-block;
+    }
+    .nav-regalo a:hover { opacity: 0.75; color: var(--lavender); }
+
     /* ── Admin lock trigger ── */
     #adminTrigger {
       position: fixed;
@@ -587,6 +607,11 @@ Y hablando de abandonar... te tenemos una pregunta 😋</div>
       <span class="h1">✿</span>
     </div>
   </div>
+
+  <div class="nav-regalo">
+    <a href="regalo.html">nuestro primer mes →</a>
+  </div>
+
 </main>
 
 <!-- Password modal -->
